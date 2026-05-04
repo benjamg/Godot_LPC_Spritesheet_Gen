@@ -17,7 +17,12 @@ func _on_layer_changed():
 func _init():
 	if animations.size() == 1:
 		animations = preload("internal/lpc_frames.tres").animations.duplicate(true)
-	_set_atlas(preload("internal/lpc_char_ss_template.png"))
+	# Only apply the placeholder template atlas to a *fresh* blueprint (no
+	# layers imported yet). For an already-imported blueprint, the layer
+	# children of LPCSprite supply the real textures — overwriting the atlas
+	# here every time the resource loads breaks editor rendering.
+	if layers.is_empty():
+		_set_atlas(preload("internal/lpc_char_ss_template.png"))
 
 func _get_index_by_z(z : int):
 	for i in range(0, layers.size()):
