@@ -7,10 +7,13 @@ extends VBoxContainer
 var dst_base_path = "res://assets/lpc_sprites/"
 
 # v2 LPC schema: each layer is served as a per-animation PNG, but the addon's
-# blueprint expects a single unified sheet (832x1344) with all animations
+# blueprint expects a single unified sheet (832x2944) with all animations
 # stacked at fixed Y offsets. This map covers every animation the unified
 # sheet has a row for, keyed by the v2 JSON animation id. Values are the Y
 # offset in the unified sheet. Source of truth: lpc_frames.tres regions.
+# Note: keys are the v2 download ids (e.g. "spellcast"); the in-engine anim
+# names in lpc_sprite.gd use a different prefix for cast ("cast" vs "spellcast")
+# but both refer to the same Y=0 row.
 const ANIMATION_ROW_MAP := {
 	"spellcast": 0,
 	"thrust": 256,
@@ -18,9 +21,16 @@ const ANIMATION_ROW_MAP := {
 	"slash": 768,
 	"shoot": 1024,
 	"hurt": 1280,
+	"climb": 1344,
+	"idle": 1408,
+	"run": 1664,
+	"jump": 1920,
+	"sit": 2176,
+	"emote": 2432,
+	"combat_idle": 2688,
 }
 const UNIFIED_SHEET_W := 832
-const UNIFIED_SHEET_H := 1344
+const UNIFIED_SHEET_H := 2944
 # Path tokens that may appear as a directory segment or file stem in a layer
 # fileName and must be detected so we can substitute the animation id.
 const ANIMATION_TOKENS := [
@@ -47,6 +57,14 @@ func set_blueprint(_blueprint : LPCSpriteBlueprint):
 func _enter_tree():
 	if !blueprint:
 		set_blueprint(LPCSpriteBlueprint.new())
+
+func _ready():
+	# OptionButton has no static items in the .tscn; mirror LPCSprite.anim_names
+	# so the dropdown stays in sync with whatever the runtime exposes.
+	var btn : OptionButton = $bodytypes/animation
+	btn.clear()
+	for anim_name in LPCSprite.anim_names:
+		btn.add_item(anim_name)
 
 func _update_credits_text():
 	var missing_text = "!MISSING LICENSE INFORMATION!"
@@ -101,11 +119,11 @@ func _find_anim_token_index(file_name : String) -> int:
 	# Walk path segments + file stem looking for a known LPC animation token.
 	# Returns the segment index, or -1 if none found. We need this to know
 	# which segment to substitute when deriving per-animation file paths.
-	var parts := file_name.split("/")
+	var parts : PackedStringArray = file_name.split("/")
 	# Inspect every segment except the bare extension (the last "." part of
 	# the final segment is the extension and never an anim token).
 	for i in parts.size():
-		var seg := parts[i]
+		var seg : String = parts[i]
 		if i == parts.size() - 1 and seg.contains("."):
 			seg = seg.get_basename()
 		if seg in ANIMATION_TOKENS:
@@ -119,8 +137,8 @@ func _derive_per_anim_path(file_name : String, anim_id : String) -> String:
 	var idx := _find_anim_token_index(file_name)
 	if idx < 0:
 		return file_name
-	var parts := file_name.split("/")
-	var last_idx := parts.size() - 1
+	var parts : PackedStringArray = file_name.split("/")
+	var last_idx : int = parts.size() - 1
 	if idx == last_idx:
 		var ext := parts[idx].get_extension()
 		parts[idx] = anim_id + "." + ext
@@ -131,14 +149,15 @@ func _derive_per_anim_path(file_name : String, anim_id : String) -> String:
 func _unified_path_for_layer(layer : Dictionary) -> String:
 	# Composite output goes alongside the per-animation PNGs, named uniquely
 	# by itemId so multiple imports never collide.
-	var idx := _find_anim_token_index(layer["fileName"])
-	var parts := layer["fileName"].split("/")
+	var file_name : String = layer["fileName"]
+	var idx := _find_anim_token_index(file_name)
+	var parts : PackedStringArray = file_name.split("/")
 	var base_dir := ""
 	if idx > 0:
-		var head := parts.slice(0, idx)
+		var head : PackedStringArray = parts.slice(0, idx)
 		base_dir = "/".join(head)
 	else:
-		base_dir = layer["fileName"].get_base_dir()
+		base_dir = file_name.get_base_dir()
 	var item_id : String = layer.get("itemId", "layer")
 	return "%s/__unified_%s.png" % [base_dir, item_id]
 
@@ -196,7 +215,8 @@ func _download_spritesheets_from_web(base_url : String, layers : Array):
 			if anim_id in supported:
 				anims_to_fetch.append(anim_id)
 		if anims_to_fetch.is_empty():
-			anims_to_fetch = [layer.get("fileName", "").get_basename().get_file()]
+			var fallback_name : String = layer.get("fileName", "")
+			anims_to_fetch = [fallback_name.get_basename().get_file()]
 
 		for anim_id in anims_to_fetch:
 			var rel_path : String

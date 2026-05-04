@@ -33,7 +33,7 @@ func _play_and_wait(anim_name : String):
 
 func _process(delta):
 	$Label.text = $LPCSprite.anim
-	
+
 	if not attacking:
 		var velocity = get_local_mouse_position()
 		facing_direction = velocity.normalized()
@@ -45,6 +45,30 @@ func _process(delta):
 			$LPCSprite.animate_movement(velocity)
 		else:
 			$LPCSprite.set_anim("idle")
-			
+
 		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			_play_and_wait("slash")
+
+const _MOUSE_BUTTON_NAMES := {
+	MOUSE_BUTTON_LEFT: "LEFT",
+	MOUSE_BUTTON_RIGHT: "RIGHT",
+	MOUSE_BUTTON_MIDDLE: "MIDDLE",
+	MOUSE_BUTTON_WHEEL_UP: "WHEEL_UP",
+	MOUSE_BUTTON_WHEEL_DOWN: "WHEEL_DOWN",
+	MOUSE_BUTTON_XBUTTON1: "XBUTTON1",
+	MOUSE_BUTTON_XBUTTON2: "XBUTTON2",
+}
+
+func _unhandled_input(event):
+	var mb := event as InputEventMouseButton
+	if mb == null or not mb.pressed:
+		return
+	var btn_name : String = _MOUSE_BUTTON_NAMES.get(mb.button_index, "BUTTON_%d" % mb.button_index)
+	print("[demo_unit] mouse %s pressed at %s (attacking=%s)" % [btn_name, mb.position, attacking])
+	if attacking:
+		return
+	match mb.button_index:
+		MOUSE_BUTTON_RIGHT:
+			_play_and_wait("thrust")
+		MOUSE_BUTTON_MIDDLE:
+			_play_and_wait("cast")

@@ -26,7 +26,7 @@ signal animation_climax(animname)
 # TODO: maybe better do everything with enums and use to the String name array 
 # as workaround it's double
 const dir_names = ["down","left","up","right"]
-const anim_names = ["idle", "walk", "stride", "jog", "cast", "slash", "thrust", "hurt"]
+const anim_names = ["idle", "walk", "run", "cast", "slash", "thrust", "shoot", "hurt", "climb", "jump", "sit", "emote", "combat_idle"]
 
 const dir_vectors = {
 	"down" 	: Vector2(0, 1),
@@ -36,14 +36,9 @@ const dir_vectors = {
 }
 
 @export_enum("down", "left", "up", "right") var dir: String = "down" : set=set_dir
-@export_enum("idle", "walk", "stride", "jog", "cast", "slash", "thrust", "hurt") var anim: String = "idle" : set=set_anim
-
-## If enabled: three animations (based on speed) are used: walk, stride, jog
-## If disabled: only 'walk' is used with varying animation speed
-@export var stride_jog_enabled: bool = false
+@export_enum("idle", "walk", "run", "cast", "slash", "thrust", "shoot", "hurt", "climb", "jump", "sit", "emote", "combat_idle") var anim: String = "idle" : set=set_anim
 
 var _last_frames
-const _walk_anim_names = ["walk", "stride", "jog"]
 
 
 func _init():
@@ -127,12 +122,17 @@ func set_dir(direction):
 ## Set animation by name and play it, can be one of:
 ## - idle
 ## - walk
-## - stride
-## - hustle
+## - run
+## - cast
 ## - slash
 ## - thrust
 ## - shoot
 ## - hurt
+## - climb
+## - jump
+## - sit
+## - emote
+## - combat_idle
 func set_anim(_animation_name : String):
 	# Only reset frame/play on an actual animation change. Callers like
 	# animate_movement() reassign `anim` every physics frame; an
@@ -145,18 +145,14 @@ func set_anim(_animation_name : String):
 	_update_animation()
 
 # Takes velocity vector and chooses correct animation from it
-# Note: 32px/s is 
+# Note: walk threshold is 32px/s (1.0 speed_scale at 32). Speeds above 48px/s
+# switch to the real LPC run animation.
 func animate_movement(velocity : Vector2):
 	set_dir(velocity)
 	if velocity.length() > 0:
 		var speed := velocity.length()
-		if stride_jog_enabled:
-			if speed > 48:
-				anim = "jog"
-			elif speed > 28:
-				anim = "stride"
-			elif speed > 0:
-				anim = "walk"
+		if speed > 48:
+			anim = "run"
 		else:
 			speed_scale = speed / 32
 			anim = "walk"
@@ -244,19 +240,13 @@ func _angle_to_dir(_angle):
 func _update_animation():
 	var anim_name = anim + "_" + dir
 	if animation != anim_name:
-		if anim == "hurt":
-			if dir != "down": # this check prevents running into a recusion as in Godot4 it would call the setter again and again...
-				dir = "down" # 'hurt' is always 'down'
-			anim_name = "hurt_down"
+		# hurt and climb are 1-direction LPC anims (always shown facing down)
+		if anim == "hurt" or anim == "climb":
+			if dir != "down": # avoid recursion via dir setter
+				dir = "down"
+			anim_name = anim + "_down"
 		if sprite_frames and sprite_frames.has_animation(anim_name):
-			# This mess is an attempt to blend stride animations changes better together
-			if anim in _walk_anim_names and animation.split("_")[0] in _walk_anim_names:
-				var factor : float = float(frame) / float(sprite_frames.get_frame_count(animation))
-				var index := int(round(factor * float(sprite_frames.get_frame_count(anim_name))))
-				animation = anim_name
-				frame = index
-			else:
-				animation = anim_name
+			animation = anim_name
 			_on_LPCSprite_frame_changed()
 
 
