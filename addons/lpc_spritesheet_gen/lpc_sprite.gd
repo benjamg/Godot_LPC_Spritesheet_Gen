@@ -120,7 +120,6 @@ func set_animation_tree(direction: Vector2):
 ##
 func set_dir(direction):
 	if typeof(direction) == TYPE_VECTOR2:
-		print("Setting direction by Vector2: " + str(direction))
 		# Vector2.ZERO.angle() is 0, which _angle_to_dir treats as "right" —
 		# so stopping always snapped facing to right regardless of where the
 		# character was actually moving. Preserve the current dir when the
