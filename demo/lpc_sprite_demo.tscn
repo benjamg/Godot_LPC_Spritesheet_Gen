@@ -1,7 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://bm2iyoccfk7rp"]
+[gd_scene format=3 uid="uid://bm2iyoccfk7rp"]
 
-[ext_resource type="Script" path="res://demo/demo_unit.gd" id="1"]
-[ext_resource type="Script" path="res://addons/lpc_spritesheet_gen/lpc_sprite.gd" id="2"]
+[ext_resource type="Script" uid="uid://b8vu7kntrot5b" path="res://demo/demo_unit.gd" id="1"]
+[ext_resource type="Script" uid="uid://dctpwobtjgbfi" path="res://addons/lpc_spritesheet_gen/lpc_sprite.gd" id="2"]
 [ext_resource type="SpriteFrames" uid="uid://bt06vcxaf4nau" path="res://demo/paladin_blueprint.tres" id="3"]
 [ext_resource type="SpriteFrames" uid="uid://170qje7n2rv0" path="res://demo/skeleton_blueprint.tres" id="4"]
 
@@ -40,9 +40,9 @@ func _process(delta):
 			right = true
 "
 
-[node name="Demo" type="Node2D"]
+[node name="Demo" type="Node2D" unique_id=1988477052]
 
-[node name="RichTextLabel" type="RichTextLabel" parent="."]
+[node name="RichTextLabel" type="RichTextLabel" parent="." unique_id=284966484]
 self_modulate = Color(1, 1, 1, 0.235294)
 custom_minimum_size = Vector2(300, 100)
 offset_right = 1.0
@@ -55,37 +55,37 @@ middle -> shoot"
 fit_content = true
 scroll_active = false
 
-[node name="Node2D" type="Node2D" parent="."]
+[node name="Node2D" type="Node2D" parent="." unique_id=252306450]
 scale = Vector2(2, 2)
 
-[node name="Skeleton" type="Node2D" parent="Node2D"]
+[node name="Skeleton" type="Node2D" parent="Node2D" unique_id=1423484438]
 position = Vector2(253, 168)
 script = SubResource("1")
 
-[node name="LPCSprite" type="AnimatedSprite2D" parent="Node2D/Skeleton"]
+[node name="LPCSprite" type="AnimatedSprite2D" parent="Node2D/Skeleton" unique_id=774617262]
 sprite_frames = ExtResource("4")
 animation = &"idle_down"
 centered = false
 offset = Vector2(-32, -60)
 script = ExtResource("2")
 
-[node name="Paladin" type="Node2D" parent="Node2D"]
+[node name="Paladin" type="Node2D" parent="Node2D" unique_id=898872429]
 position = Vector2(203.5, 179.5)
 script = ExtResource("1")
 skeleton_node = NodePath("../Skeleton")
 
-[node name="Label" type="Label" parent="Node2D/Paladin"]
+[node name="Label" type="Label" parent="Node2D/Paladin" unique_id=187043599]
 self_modulate = Color(1, 1, 1, 0.411765)
 text = "text"
 
-[node name="LPCSprite" type="AnimatedSprite2D" parent="Node2D/Paladin"]
+[node name="LPCSprite" type="AnimatedSprite2D" parent="Node2D/Paladin" unique_id=716643809]
 sprite_frames = ExtResource("3")
 animation = &"walk_left"
-frame_progress = 0.309539
+frame_progress = 0.12030614
 centered = false
 offset = Vector2(-32, -60)
 script = ExtResource("2")
 dir = "left"
-anim = "walk"
+anim = "run"
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1510816989]
