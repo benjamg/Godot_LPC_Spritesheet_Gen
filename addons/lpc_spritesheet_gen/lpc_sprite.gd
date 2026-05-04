@@ -134,9 +134,12 @@ func set_dir(direction):
 ## - shoot
 ## - hurt
 func set_anim(_animation_name : String):
-	frame = 0
-	play()
+	# Only reset frame/play on an actual animation change. Callers like
+	# animate_movement() reassign `anim` every physics frame; an
+	# unconditional `frame = 0` here pinned playback at frame 0 forever.
 	if anim != _animation_name:
+		frame = 0
+		play()
 		anim = _animation_name
 		speed_scale = 1.0
 	_update_animation()
