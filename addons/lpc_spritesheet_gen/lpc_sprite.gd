@@ -120,17 +120,20 @@ func set_animation_tree(direction: Vector2):
 ##
 func set_dir(direction):
 	if typeof(direction) == TYPE_VECTOR2:
+		print("Setting direction by Vector2: " + str(direction))
 		# Vector2.ZERO.angle() is 0, which _angle_to_dir treats as "right" —
 		# so stopping always snapped facing to right regardless of where the
 		# character was actually moving. Preserve the current dir when the
 		# velocity collapses to zero (idle keeps the last walking facing).
 		if direction == Vector2.ZERO:
 			return
-		# Diagonals resolve to the horizontal axis: diagonal-up-right faces
-		# right rather than picking up/down. The original _angle_to_dir cone
-		# layout was asymmetric (up-left → up, down-left → left). Keeping the
-		# horizontal bias makes facing consistent across all four diagonals.
-		if direction.x != 0:
+		# Cardinal snap by component magnitude: whichever axis is larger
+		# wins. Ties go to horizontal (covers the player's exact-45° diagonal
+		# input where |x| == |y| — that should read as left/right). For an
+		# arbitrary heading angle this means up/down get a 90° wedge each
+		# centred on the vertical poles, and left/right get the wider 90°
+		# wedges to either side.
+		if absf(direction.x) >= absf(direction.y):
 			direction = "right" if direction.x > 0 else "left"
 		else:
 			direction = "down" if direction.y > 0 else "up"
